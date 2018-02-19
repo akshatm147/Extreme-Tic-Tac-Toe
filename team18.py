@@ -113,10 +113,10 @@ class Team18():
                     return block[0][i]
 
             # Checking for diagonals
-            if block[0][0] == block[1][1] == block[2][2] == block[3][3] and block[0][0] in (1,2):
-                return block[0][0]
-            if block[0][3] == block[1][2] == block[2][1] == block[3][0] and block[1][2] in (1,2):
-                return block[0][3]
+            # if block[0][0] == block[1][1] == block[2][2] == block[3][3] and block[0][0] in (1,2):
+            #     return block[0][0]
+            # if block[0][3] == block[1][2] == block[2][1] == block[3][0] and block[1][2] in (1,2):
+            #     return block[0][3]
 
             # Checking for diamonds
             # diamond-1
@@ -140,8 +140,8 @@ class Team18():
 
             flagr = 1   # flag for row win
             flagc = 1   # flag for column win
-            flagpd = 1  # flag for primary diagonal win
-            flagnd = 1  # flag for non-primary diagonal win
+            # flagpd = 1  # flag for primary diagonal win
+            # flagnd = 1  # flag for non-primary diagonal win
             flagd1 = 1   # flag for diamond-1 win
             flagd2 = 1   # flag for diamond-2 win
             flagd3 = 1   # flag for diamond-3 win
@@ -167,23 +167,23 @@ class Team18():
                     if new_block[col][j]:
                         self.score += 1
 
-            if (i,j) in [(0,0), (1,1), (2,2), (3,3)]:
-                for diag in range(4):
-                    if new_block[diag][diag] == 2:
-                        flagpd = 0
-                if flagpd:
-                    for diag in range(4):
-                        if new_block[diag][diag] == 1:
-                            self.score += 1
+            # if (i,j) in [(0,0), (1,1), (2,2), (3,3)]:
+            #     for diag in range(4):
+            #         if new_block[diag][diag] == 2:
+            #             flagpd = 0
+            #     if flagpd:
+            #         for diag in range(4):
+            #             if new_block[diag][diag] == 1:
+            #                 self.score += 1
 
-            if (i,j) in [(0,3), (1,2), (2,1), (3,0)]:
-                for diag in range(4):
-                    if new_block[diag][3 - diag] == 2:
-                        flagnd = 0
-                if flagnd:
-                    for diag in range(4):
-                        if new_block[diag][3 - diag] == 1:
-                            self.score += 1
+            # if (i,j) in [(0,3), (1,2), (2,1), (3,0)]:
+            #     for diag in range(4):
+            #         if new_block[diag][3 - diag] == 2:
+            #             flagnd = 0
+            #     if flagnd:
+            #         for diag in range(4):
+            #             if new_block[diag][3 - diag] == 1:
+            #                 self.score += 1
 
             if (i,j) in [(0,1), (1,0), (2,1), (1,1)]:
                 if new_block[0][1] == 2:
@@ -262,3 +262,40 @@ class Team18():
                         self.score += 1
 
             return self.score
+
+    def getBlockStatus(self, block):
+
+        block = tuple([tuple(block[i])] for i in range(4))
+
+        if block not in self.heuristicDict:
+            blockStats = self.getBlockStatus(block)
+            if blockStats == 1:
+                self.heuristicDict[block] = 100.00
+            elif blockStats == 2:
+                self.heuristicDict[block] = 0.1
+            elif blockStats == 3:
+                self.heuristicDict[block] = 0.0
+            else:
+                bestScore = -1000
+                moves = self.checkAllowedMarkers(block)
+                myPlayBlock = [ list(block[i]) for i in range(4) ]
+                oppnPlayBlock = [ list(block[i]) for i in range(4) ]
+
+                for i in range(4):
+                    for j in range(4):
+                        if oppnPlayBlock[i][j]:
+                            oppnPlayBlock[i][j] = 3 - oppnPlayBlock[i][j]
+
+                for move in moves:
+                    ans += 1.0 + self.scoreCount(move[0], move[1], myPlayBlock) - self.scoreCount(move[0], move[1], oppnPlayBlock)
+                    if ans >= best:
+                        wePlayList = []
+                        best = ans
+                        wePlayList.append((move[0], move[1]))
+                    self.heuristicDict[block] = best
+
+            return self.heuristicDict[block]
+
+        def getLineScore(self, line, blockProb, revBlockProb, currentBlockStatus):
+
+            
