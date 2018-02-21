@@ -316,7 +316,24 @@ class Team18():
 
         return pos - neg
 
-    def getDiamondScore(self, currentBlockStatus):
+    def getDiamondScore(self, blockProb, cpBlockProb, currentBlockStatus):
+
+        diamond = []
+
+        diamond[0] = [(0, 1), (1, 0), (1, 2), (2, 1)]
+        diamond[1] = [(0, 2), (1, 1), (2, 2), (1, 3)]
+        diamond[2] = [(1, 1), (2, 0), (3, 1), (2, 2)]
+        diamond[3] = [(1, 2), (2, 1), (3, 2), (2, 3)]
+
+        dScore = 0
+
+        for k in range(4):
+            if 3 in [ currentBlockStatus[i][j] for (i,j) in diamond[k] ]:
+                dScore += 0
+
+        if dScore == 0:
+            return 0
+
         
 
     def terminalCheck(self, currentBoard, currentBlockStatus):
