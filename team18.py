@@ -316,6 +316,9 @@ class Team18():
 
         return pos - neg
 
+    def getDiamondScore(self, currentBlockStatus):
+        
+
     def terminalCheck(self, currentBoard, currentBlockStatus):
         terminalStat = self.getBlockStatus(currentBlockStatus)
 
@@ -405,10 +408,10 @@ class Team18():
             depth = 0
         else:
             depth = 3
-            uselessScore, nextMove, retDepth = self.alpha-beta-pruning(formattedBoard, formattedBlockStatus, -100000000, 100000000, True, prevMove, depth)
+            uselessScore, nextMove, retDepth = self.alphaBetaPruning(formattedBoard, formattedBlockStatus, -100000000, 100000000, True, prevMove, depth)
         return nextMove
 
-    def alpha-beta-pruning(self, currentBoard, currentBlockStatus, alpha, beta, flag, prevMove, depth):
+    def alphaBetaPruning(self, currentBoard, currentBlockStatus, alpha, beta, flag, prevMove, depth):
         tempBoard = copy.deepcopy(currentBoard)
         tempBlockStatus = copy.deepcopy(currentBlockStatus)
         terminalStat, terminalScore = selfself.terminalCheck(currentBoard, currentBlockStatus)
@@ -428,7 +431,7 @@ class Team18():
             for move in possibleMoves:
                 tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 1
                 tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
-                childScore, childMove, childDepth = self.alpha-beta-pruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
+                childScore, childMove, childDepth = self.alphaBetaPruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
                 if childScore >= v:
                     if v < childScore or bestDepth > childDepth:
                         v = childScore
@@ -445,7 +448,7 @@ class Team18():
         for move in possibleMoves:
             tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 2
             tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
-            childScore, childMove, childDepth = self.alpha-beta-pruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
+            childScore, childMove, childDepth = self.alphaBetaPruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
             if childScore <= v:
                 if v > childScore or bestDepth > childDepth:
                     v = childScore
