@@ -334,7 +334,22 @@ class Team18():
         if dScore == 0:
             return 0
 
-        
+        positiveScore = []
+        negativeScore = []
+
+        for k in range(4):
+            positiveScore = [ blockProb[i][j] for (i, j) in diamond[k] ]
+            negativeScore = [ cpBlockProb[i][j] for (i, j) in diamond[k] ]
+
+        pos = 1
+        neg = 1
+
+        for i in positiveScore:
+            pos *= i
+        for i in negativeScore:
+            neg *= i
+
+        return pos - neg
 
     def terminalCheck(self, currentBoard, currentBlockStatus):
         terminalStat = self.getBlockStatus(currentBlockStatus)
