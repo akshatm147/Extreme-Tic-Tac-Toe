@@ -374,3 +374,86 @@ class Team18():
             return 1e-05
 
         return sum(boardScore)
+
+    def move(self, currentBoard, prevMove, flag):
+        formattedBoard = [ [ [ [0] * 4 for _ in range(4) ] for _ in range(4)] for _ in range(4) ]
+        formattedBlockStatus = [ [0] * 4 for _ in range(4) ]
+        copyBlock = [ [0] * 4 for _ in range(4) ]
+
+        for i in range(16):
+            for j in range(16):
+                if currentBoard.board_status[i][j] == flag:
+                    formattedBoard[i/4][j/4][i%4][j%4] = 1      # Win
+                elif currentBoard.board_status[i][j] == '-':
+                    formattedBoard[i/4][j/4][i%4][j%4] = 0      # Not played / empty
+                else:
+                    formattedBoard[i/4][j/4][i%4][j%4] = 2      # Lost or Draw
+
+        for i in range(4):
+            for j in range(4):
+                if currentBoard.board_status[i][j] == flag:
+                    formattedBlockStatus[i][j] = 1    # Win
+                elif currentBoard.board_status[i][j] == '-':
+                    formattedBlockStatus[i][j] = 0    # Not played / empty
+                elif currentBoard.board_status[i][j] == 'd':
+                    formattedBlockStatus[i][j] = 3    # Draw
+                else:
+                    formattedBlockStatus[i][j] = 2    # Lose
+
+        if prevMove[0] < 0 or prevMove[1] < 0:
+            uselessScore, nextMove, retDepth = 0, (10, 10), 0
+            depth = 0
+        else:
+            depth = 3
+            uselessScore, nextMove, retDepth = self.alpha-beta-pruning(formattedBoard, formattedBlockStatus, -100000000, 100000000, True, prevMove, depth)
+        return nextMove
+
+    def alpha-beta-pruning(self, currentBoard, currentBlockStatus, alpha, beta, flag, prevMove, depth):
+        tempBoard = copy.deepcopy(currentBoard)
+        tempBlockStatus = copy.deepcopy(currentBlockStatus)
+        terminalStat, terminalScore = selfself.terminalCheck(currentBoard, currentBlockStatus)
+
+        if terminalStat:
+            return (terminalScore, (), 0)
+        if depth <= 0:
+            return (self.getBoardScore(currentBoard, currentBlockStatus), (), 0)
+
+        possibleMoves = self.getAllowedMoves(currentBoard, currentBlockStatus, prevMove)
+        random.shuffle(possibleMoves)
+        bestMove = ()
+        bestDepth = 100
+
+        if flag:
+            v = -100000000
+            for move in possibleMoves:
+                tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 1
+                tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
+                childScore, childMove, childDepth = self.alpha-beta-pruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
+                if childScore >= v:
+                    if v < childScore or bestDepth > childDepth:
+                        v = childScore
+                        bestMove = move
+                        bestDepth = childDepth
+                    alpha = max(alpha, v)
+                    tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 0
+                    tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
+                    if alpha >= beta:
+                        break
+                return (v, bestMove, bestDepth)
+
+        v = 100000000
+        for move in possibleMoves:
+            tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 2
+            tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
+            childScore, childMove, childDepth = self.alpha-beta-pruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
+            if childScore <= v:
+                if v > childScore or bestDepth > childDepth:
+                    v = childScore
+                    bestMove = childMove
+                    bestDepth = childDepth
+            beta = min(beta, v)
+            tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 0
+            tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
+            if alpha >= beta:
+                break
+        return (v, bestMove, bestDepth)
