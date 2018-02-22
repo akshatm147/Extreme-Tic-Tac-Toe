@@ -267,7 +267,7 @@ class Team18():
 
     def getBlockScore(self, block):
 
-        block = tuple([tuple(block[i])] for i in range(4))
+        block = tuple([ tuple(block[i]) for i in range(4) ] )
 
         if block not in self.heuristicDict:
             blockStats = self.getBlockStatus(block)
@@ -289,12 +289,12 @@ class Team18():
                             oppnPlayBlock[i][j] = 3 - oppnPlayBlock[i][j]
 
                 for move in moves:
-                    ans += 1.0 + self.scoreCount(move[0], move[1], myPlayBlock) - self.scoreCount(move[0], move[1], oppnPlayBlock)
-                    if ans >= best:
+                    ans = 1.0 + self.scoreCount(move[0], move[1], myPlayBlock) - self.scoreCount(move[0], move[1], oppnPlayBlock)
+                    if ans >= bestScore:
                         wePlayList = []
                         best = ans
                         wePlayList.append((move[0], move[1]))
-                    self.heuristicDict[block] = best
+                    self.heuristicDict[block] = bestScore
 
         return self.heuristicDict[block]
 
@@ -351,7 +351,7 @@ class Team18():
 
         return pos - neg
 
-    def terminalCheck(self, currentBoard, currentBlockStatus):
+    def terminalCheck(self, currentBoardStatus, currentBlockStatus):
         terminalStat = self.getBlockStatus(currentBlockStatus)
 
         if terminalStat == 0:
@@ -374,15 +374,15 @@ class Team18():
         return (True, blockCount)
 
     def getBoardScore(self, currentBoardStatus, currentBlockStatus):
-        terminalStat, terminalScore = self.terminalCheck(currentBoard, currentBlockStatus)
+        terminalStat, terminalScore = self.terminalCheck(currentBoardStatus, currentBlockStatus)
 
         if terminalStat:
             return terminalScore
 
-        cpCurrentBoard = copy.deepcopy(currentBoard)
+        cpCurrentBoard = copy.deepcopy(currentBoardStatus)
 
         for row in range(4):
-            for clo in range(4):
+            for col in range(4):
                 for i in range(4):
                     for j in range(4):
                         if cpCurrentBoard[row][col][i][j]:
@@ -393,8 +393,8 @@ class Team18():
 
         for i in range(4):
             for j in range(4):
-                blockProb[i][j] = self.getBlockScore(currentBoard[i][j])
-                cpBlockProbp[i][j] = self.getBlockScore(cpCurrentBoard[i][j])
+                blockProb[i][j] = self.getBlockScore(currentBoardStatus[i][j])
+                cpBlockProb[i][j] = self.getBlockScore(cpCurrentBoard[i][j])
 
         boardScore = []
         for i in range(4):
@@ -410,27 +410,27 @@ class Team18():
 
         return sum(boardScore)
 
-    def move(self, currentBoard, prevMove, flag):
+    def move(self, currentBoardStatus, prevMove, flag):
         formattedBoard = [ [ [ [0] * 4 for _ in range(4) ] for _ in range(4)] for _ in range(4) ]
         formattedBlockStatus = [ [0] * 4 for _ in range(4) ]
         copyBlock = [ [0] * 4 for _ in range(4) ]
 
         for i in range(16):
             for j in range(16):
-                if currentBoard.board_status[i][j] == flag:
+                if currentBoardStatus.board_status[i][j] == flag:
                     formattedBoard[i/4][j/4][i%4][j%4] = 1      # Win
-                elif currentBoard.board_status[i][j] == '-':
+                elif currentBoardStatus.board_status[i][j] == '-':
                     formattedBoard[i/4][j/4][i%4][j%4] = 0      # Not played / empty
                 else:
                     formattedBoard[i/4][j/4][i%4][j%4] = 2      # Lost or Draw
 
         for i in range(4):
             for j in range(4):
-                if currentBoard.board_status[i][j] == flag:
+                if currentBoardStatus.board_status[i][j] == flag:
                     formattedBlockStatus[i][j] = 1    # Win
-                elif currentBoard.board_status[i][j] == '-':
+                elif currentBoardStatus.board_status[i][j] == '-':
                     formattedBlockStatus[i][j] = 0    # Not played / empty
-                elif currentBoard.board_status[i][j] == 'd':
+                elif currentBoardStatus.board_status[i][j] == 'd':
                     formattedBlockStatus[i][j] = 3    # Draw
                 else:
                     formattedBlockStatus[i][j] = 2    # Lose
@@ -443,17 +443,17 @@ class Team18():
             uselessScore, nextMove, retDepth = self.alphaBetaPruning(formattedBoard, formattedBlockStatus, -100000000, 100000000, True, prevMove, depth)
         return nextMove
 
-    def alphaBetaPruning(self, currentBoard, currentBlockStatus, alpha, beta, flag, prevMove, depth):
-        tempBoard = copy.deepcopy(currentBoard)
+    def alphaBetaPruning(self, currentBoardStatus, currentBlockStatus, alpha, beta, flag, prevMove, depth):
+        tempBoard = copy.deepcopy(currentBoardStatus)
         tempBlockStatus = copy.deepcopy(currentBlockStatus)
-        terminalStat, terminalScore = selfself.terminalCheck(currentBoard, currentBlockStatus)
+        terminalStat, terminalScore = self.terminalCheck(currentBoardStatus, currentBlockStatus)
 
         if terminalStat:
             return (terminalScore, (), 0)
         if depth <= 0:
-            return (self.getBoardScore(currentBoard, currentBlockStatus), (), 0)
+            return (self.getBoardScore(currentBoardStatus, currentBlockStatus), (), 0)
 
-        possibleMoves = self.getAllowedMoves(currentBoard, currentBlockStatus, prevMove)
+        possibleMoves = self.getAllowedMoves(currentBoardStatus, currentBlockStatus, prevMove)
         random.shuffle(possibleMoves)
         bestMove = ()
         bestDepth = 100

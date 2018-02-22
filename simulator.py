@@ -5,6 +5,9 @@ import time
 import copy
 import traceback
 
+from team18 import Team18
+from myTeam import Player
+
 TIME = 16
 MAX_PTS = 68
 
@@ -349,6 +352,7 @@ if __name__ == '__main__':
 		print '<option> can be 1 => Random player vs. Random player'
 		print '                2 => Human vs. Random Player'
 		print '                3 => Human vs. Human'
+		print '                4 => MyPlayer vs. Random player'
 		sys.exit(1)
 
 	obj1 = ''
@@ -364,6 +368,12 @@ if __name__ == '__main__':
 	elif option == '3':
 		obj1 = Manual_Player()
 		obj2 = Manual_Player()
+	elif option == '4':
+		obj1 = Team18()
+		obj2 = Random_Player()
+	elif option == '5':
+		obj1 = Player()
+		obj2 = Random_Player()
 	else:
 		print 'Invalid option'
 		sys.exit(1)
