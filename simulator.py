@@ -355,6 +355,7 @@ if __name__ == '__main__':
 		print '                4 => MyPlayer vs. Random player'
 		print '                5 => MyPlayerFinal vs. Random player'
 		print '                6 => Random player vs. MyPlayerFinal'
+		print '                7 => MyPlayerFinal vs. MyPlayerFinal'
 		sys.exit(1)
 
 	obj1 = ''
@@ -378,6 +379,9 @@ if __name__ == '__main__':
 		obj2 = Random_Player()
 	elif option == '6':
 		obj1 = Random_Player()
+		obj2 = Player()
+	elif option == '7':
+		obj1 = Player()
 		obj2 = Player()
 	else:
 		print 'Invalid option'
