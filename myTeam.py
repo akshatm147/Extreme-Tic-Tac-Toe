@@ -388,7 +388,7 @@ class Player():
             uselessScore, nextMove, retDepth = 0, (random.randint(0, 15), random.randint(0, 15)), 0
             depth = 0
         else:
-            depth = 4
+            depth = 3
             uselessScore, nextMove, retDepth = self.alphaBetaPruning(formattedBoard, formattedBlockStatus, -1000000000, 1000000000, True, oldMove, depth)
 
         return nextMove
