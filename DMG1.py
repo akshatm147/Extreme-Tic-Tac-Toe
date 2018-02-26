@@ -14,7 +14,7 @@
 
 import copy, signal, random, numpy as np
 
-class MyPlayer:
+class Player18:
 
     def __init__(self):
         self.r = 0
@@ -37,8 +37,6 @@ class MyPlayer:
         varx = choice[0] * blocksize
         vary = choice[1] * blocksize
         f = 0
-
-        # Row check for completion
         for i in xrange(varx, varx + blocksize):
             cnt = 0
             for j in xrange(vary, vary + blocksize):
@@ -48,7 +46,6 @@ class MyPlayer:
                 f = 1
                 break
 
-        # Column check for completion
         if f == 0:
             for j in xrange(vary, vary + blocksize):
                 cnt = 0
@@ -58,6 +55,25 @@ class MyPlayer:
                 if abs(cnt) == blocksize:
                     f = 1
                     break
+
+        # if f == 0:
+        #     i = varx
+        #     j = vary
+        #     cnt = 0
+        #     for k in xrange(0, blocksize):
+        #         cnt += state[i + k][j + k]
+        #
+        #     if abs(cnt) == blocksize:
+        #         f = 1
+        # if f == 0:
+        #     i = varx
+        #     j = vary
+        #     cnt = 0
+        #     for k in xrange(0, blocksize):
+        #         cnt += state[i + k][j + blocksize - 1 - k]
+        #
+        #     if abs(cnt) == blocksize:
+        #         f = 1
 
         # Diagonal check for completion
         if f == 0:
@@ -235,40 +251,22 @@ class MyPlayer:
                     return lose
                 return win
 
-        i=0
-        j=0
         ans = 0
-        ans += listfor[i][j+1] + listfor[i+1][j] + listfor[i+2][j+1] + listfor[i+1][j+2]
+        for k in xrange(0, blocksize):
+            ans += listfor[k][k]
 
         if abs(ans) == blocksize:
             if ans < 0:
                 return lose
             return win
-
         ans = 0
-        ans += listfor[i+1][j+1] + listfor[i+2][j] + listfor[i+3][j+1] + listfor[i+2][j+2]
+        for k in xrange(0, blocksize):
+            ans += listfor[k][blocksize - 1 - k]
 
         if abs(ans) == blocksize:
             if ans < 0:
                 return lose
             return win
-
-        ans = 0
-        ans += listfor[i][j+2] + listfor[i+1][j+1] + listfor[i+2][j+2] + listfor[i+1][j+3]
-
-        if abs(ans) == blocksize:
-            if ans < 0:
-                return lose
-            return win
-
-        ans = 0
-        ans += listfor[i+1][j+2] + listfor[i+2][j+1] + listfor[i+3][j+2] + listfor[i+2][j+3]
-
-        if abs(ans) == blocksize:
-            if ans < 0:
-                return lose
-            return win
-
         return 0
 
     def eval_fn(self, state, blocksize):
@@ -320,36 +318,21 @@ class MyPlayer:
 
             val += temp - temp1
 
-        i=0
-        j=0
         temp = 1
         temp1 = 1
-        temp *= store_block[i][j+1][0] * store_block[i+1][j][0] * store_block[i+2][j+1][0] * store_block[i+1][j+2][0]
-        temp1 *= store_block[i][j+1][1] * store_block[i+1][j][1] * store_block[i+2][j+1][1] * store_block[i+1][j+2][1]
+        for i in xrange(blocksize):
+            temp *= store_block[i][i][0]
+            temp1 *= store_block[i][i][1]
 
         val += temp - temp1
-
         temp = 1
         temp1 = 1
-        temp *= store_block[i+1][j+2][0] * store_block[i+2][j+1][0] * store_block[i+3][j+2][0] * store_block[i+2][j+3][0]
-        temp1 *= store_block[i+1][j+2][1] * store_block[i+2][j+1][1] * store_block[i+3][j+2][1] * store_block[i+2][j+3][1]
+        for i in xrange(blocksize):
+            l = blocksize - 1 - i
+            temp *= store_block[i][l][0]
+            temp1 *= store_block[i][l][1]
 
         val += temp - temp1
-
-        temp = 1
-        temp1 = 1
-        temp *= store_block[i][j+2][0] * store_block[i+1][j+1][0] * store_block[i+2][j+2][0] * store_block[i+1][j+3][0]
-        temp1 *= store_block[i][j+2][1] * store_block[i+1][j+1][1] * store_block[i+2][j+2][1] * store_block[i+1][j+3][1]
-
-        val += temp - temp1
-
-        temp = 1
-        temp1 = 1
-        temp *= store_block[i+1][j+1][0] * store_block[i+2][j][0] * store_block[i+3][j+1][0] * store_block[i+2][j+2][0]
-        temp1 *= store_block[i+1][j+1][1] * store_block[i+2][j][1] * store_block[i+3][j+1][1] * store_block[i+2][j+2][1]
-
-        val += temp - temp1
-
         return val
 
     def winning(self, state, i, j, blocksize):
@@ -386,156 +369,37 @@ class MyPlayer:
             if bnt2 == cnt2:
                 val += temp2
 
-        i=0
-        j=0
         temp = 1
         cnt = 0
         bnt = 0
-
-        if state[i][j+1] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[i%4][(j+1)%4]
-        cnt += abs(state[i][j+1])
-        bnt += state[i][j+1]
-
-        if state[i+1][j] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+1)%4][j%4]
-        cnt += abs(state[i+1][j])
-        bnt += state[i+1][j]
-
-        if state[i+2][j+1] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+2)%4][(j+1)%4]
-        cnt += abs(state[i+2][j+1])
-        bnt += state[i+2][j+1]
-
-        if state[i+1][j+2] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+1)%4][(j+2)%4]
-        cnt += abs(state[i+1][j+2])
-        bnt += state[i+1][j+2]
+        for l in xrange(blocksize):
+            if state[i + l][j + l] == 0:
+                temp *= 0.5
+            else:
+                temp *= self.mult[l][l]
+            cnt += abs(state[i + l][j + l])
+            bnt += state[i + l][j + l]
 
         if bnt == -cnt:
             val1 += temp
         if bnt == cnt:
             val += temp
-
         temp = 1
         cnt = 0
         bnt = 0
+        for l in xrange(blocksize):
+            m = blocksize - l - 1
+            if state[i + l][j + m] == 0:
+                temp *= 0.5
+            else:
+                temp *= self.mult[l][m]
+            cnt += abs(state[i + l][j + m])
+            bnt += state[i + l][j + m]
 
-        if state[i+1][j+2] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+1)%4][(j+2)%4]
-        cnt += abs(state[i+1][j+2])
-        bnt += state[i+1][j+2]
-
-        if state[i+2][j+1] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+2)%4][(j+1)%4]
-        cnt += abs(state[i+2][j+1])
-        bnt += state[i+2][j+1]
-
-        if state[i+3][j+2] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+3)%4][(j+2)%4]
-        cnt += abs(state[i+3][j+2])
-        bnt += state[i+3][j+2]
-
-        if state[i+2][j+3] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+2)%4][(j+3)%4]
-        cnt += abs(state[i+2][j+3])
-        bnt += state[i+2][j+3]
-
-        if bnt == -cnt:
-            val1 += temp
         if bnt == cnt:
             val += temp
-
-        temp = 1
-        cnt = 0
-        bnt = 0
-
-        if state[i+2][j] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+2)%4][j%4]
-        cnt += abs(state[i+2][j])
-        bnt += state[i+2][j]
-
-        if state[i+1][j+1] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+1)%4][(j+1)%4]
-        cnt += abs(state[i+1][j+1])
-        bnt += state[i+1][j+1]
-
-        if state[i+2][j+2] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+2)%4][(j+2)%4]
-        cnt += abs(state[i+2][j+2])
-        bnt += state[i+2][j+2]
-
-        if state[i+3][j+1] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+3)%4][(j+1)%4]
-        cnt += abs(state[i+3][j+1])
-        bnt += state[i+3][j+1]
-
         if bnt == -cnt:
             val1 += temp
-        if bnt == cnt:
-            val += temp
-
-        temp = 1
-        cnt = 0
-        bnt = 0
-
-        if state[i][j+2] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[i%4][(j+2)%4]
-        cnt += abs(state[i][j+2])
-        bnt += state[i][j+2]
-
-        if state[i+1][j+1] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+1)%4][(j+1)%4]
-        cnt += abs(state[i+1][j+1])
-        bnt += state[i+1][j+1]
-
-        if state[i+2][j+2] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+2)%4][(j+2)%4]
-        cnt += abs(state[i+2][j+2])
-        bnt += state[i+2][j+2]
-
-        if state[i+1][j+3] == 0:
-            temp *= 0.5
-        else:
-            temp *= self.mult[(i+1)%4][(j+3)%4]
-        cnt += abs(state[i+1][j+3])
-        bnt += state[i+1][j+3]
-
-        if bnt == -cnt:
-            val1 += temp
-        if bnt == cnt:
-            val += temp
-
         return [val, val1]
 
     def wonby(self, state, i, j, blocksize):
@@ -583,7 +447,6 @@ class MyPlayer:
                     state[i][j] = 1
 
         choice = []
-        choice_print = [0 for i in range(2)]
         choice.append(old_move[0] % blocksize)
         choice.append(old_move[1] % blocksize)
         ans = -1e+20
@@ -606,8 +469,5 @@ class MyPlayer:
             print e,
 
         signal.alarm(0)
-
-        if choice_print:
-            return (choice_print[0], choice_print[1])
-        else:
-            return (random.randint(0,15), random.randint(0,15))
+        return (
+         choice_print[0], choice_print[1])

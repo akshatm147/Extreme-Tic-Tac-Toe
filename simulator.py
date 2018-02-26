@@ -7,6 +7,8 @@ import traceback
 
 from team18 import Team18
 from myTeam import Player
+from DMG import MyPlayer
+from DMG1 import Player18
 #from teamX import TeamX
 
 TIME = 16
@@ -384,6 +386,12 @@ if __name__ == '__main__':
 	elif option == '7':
 		obj1 = Player()
 		obj2 = Player()
+	elif option == '8':
+		obj1 = Player()
+		obj2 = MyPlayer()
+	elif option == '9':
+		obj1 = Player()
+		obj2 = Player18()
 #	elif option == '8':
 #		obj1 = Player()
 #		obj2 = TeamX()
