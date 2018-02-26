@@ -7,7 +7,7 @@ import traceback
 
 from team18 import Team18
 from myTeam import Player
-from teamX import TeamX
+#from teamX import TeamX
 
 TIME = 16
 MAX_PTS = 68
@@ -384,9 +384,9 @@ if __name__ == '__main__':
 	elif option == '7':
 		obj1 = Player()
 		obj2 = Player()
-	elif option == '8':
-		obj1 = Player()
-		obj2 = TeamX()
+#	elif option == '8':
+#		obj1 = Player()
+#		obj2 = TeamX()
 	else:
 		print 'Invalid option'
 		sys.exit(1)
