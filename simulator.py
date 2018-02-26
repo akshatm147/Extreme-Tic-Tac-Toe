@@ -390,8 +390,8 @@ if __name__ == '__main__':
 		obj1 = Player()
 		obj2 = MyPlayer()
 	elif option == '9':
-		obj1 = Player()
-		obj2 = Player18()
+		obj1 = MyPlayer()
+		obj2 = MyPlayer()
 #	elif option == '8':
 #		obj1 = Player()
 #		obj2 = TeamX()

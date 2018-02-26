@@ -588,7 +588,7 @@ class MyPlayer:
         choice.append(old_move[1] % blocksize)
         ans = -1e+20
         signal.signal(signal.SIGALRM, self.signal_handler)
-        signal.alarm(13)
+        signal.alarm(1)
         self.r = random.randint(0, 9)
         print self.r
         try:
