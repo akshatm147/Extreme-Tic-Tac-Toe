@@ -4,491 +4,610 @@
 # AI Assignment 1: Tic-Tac-Toe #
 ################################
 
-from __future__ import print_function
-import sys
-import random
-import signal
-import time
-import copy
+################################
+#           Team - 18          #
+################################
 
-class Team18():
+################################
+#            D M G             #
+################################
+
+import copy, signal, random, numpy as np
+
+class Team18:
 
     def __init__(self):
+        self.r = 0
+        self.mult = [ [ 0 for x in xrange(4) ] for y in xrange(4) ]
+        self.store = np.empty([43046721, 2])
+        self.store[:, :] = np.nan
+        for l in xrange(4):
+            for m in xrange(4):
+                if (l == 0 or l == 3) and (m == 0 or m == 3):
+                    self.mult[l][m] = 6
+                elif (l == 1 or l == 2) and (m == 1 or m == 2):
+                    self.mult[l][m] = 3
+                else:
+                    self.mult[l][m] = 4
 
-        self.validBlocks = [ [ 0 for i in range(4) ] for j in range(4) ]
-        self.validBlocks[0][0] = ((0, 0), )
-        self.validBlocks[0][1] = ((0, 1), )
-        self.validBlocks[0][2] = ((0, 2), )
-        self.validBlocks[0][3] = ((0, 3), )
-        self.validBlocks[1][0] = ((1, 0), )
-        self.validBlocks[1][1] = ((1, 1), )
-        self.validBlocks[1][2] = ((1, 2), )
-        self.validBlocks[1][3] = ((1, 3), )
-        self.validBlocks[2][0] = ((2, 0), )
-        self.validBlocks[2][1] = ((2, 1), )
-        self.validBlocks[2][2] = ((2, 2), )
-        self.validBlocks[2][3] = ((2, 3), )
-        self.validBlocks[3][0] = ((3, 0), )
-        self.validBlocks[3][1] = ((3, 1), )
-        self.validBlocks[3][2] = ((3, 2), )
-        self.validBlocks[3][3] = ((3, 3), )
-        self.allValidList = ((0, 0),
-                            (0, 1),
-                            (0, 2),
-                            (0, 3),
-                            (1, 0),
-                            (1, 1),
-                            (1, 2),
-                            (1, 3),
-                            (2, 0),
-                            (2, 1),
-                            (2, 2),
-                            (2, 3),
-                            (3, 0),
-                            (3, 1),
-                            (3, 2),
-                            (3, 3))
-        self.heuristicDict = {}
+    def signal_handler(self, signum, frame):
+        raise Exception('')
 
+    def changestate(self, state, choice, nu, blocksize):
+        varx = choice[0] * blocksize
+        vary = choice[1] * blocksize
+        f = 0
 
-    def checkAllowedBlocks(self, prevMove, blockStatus):
-        # Returns the valid blocks allowed given the previous move
+        # Row check for completion
+        for i in xrange(varx, varx + blocksize):
+            cnt = 0
+            for j in xrange(vary, vary + blocksize):
+                cnt += state[i][j]
 
-        if prevMove[0]<0 or prevMove[1]<0:
-            return self.allValidList
+            if abs(cnt) == blocksize:
+                f = 1
+                break
 
-        allowedBlocks = self.validBlocks[prevMove[0] % 4][prevMove[1] % 4]
-        allowedCells = []
+        # Column check for completion
+        if f == 0:
+            for j in xrange(vary, vary + blocksize):
+                cnt = 0
+                for i in xrange(varx, varx + blocksize):
+                    cnt += state[i][j]
 
-        for i in allowedBlocks:
-            if blockStatus[i[0]][i[1]] == 0:
-                allowedCells.append(i)
+                if abs(cnt) == blocksize:
+                    f = 1
+                    break
 
-        if len(allowedCells) == 0:
-            if i in self.allValidList:
-                if blockStatus[i[0]][i[1]] == 0:
-                    allowedCells.append(i)
+        # Diamond check for completion
+        if f == 0:
+            i = varx
+            j = vary
+            cnt = 0
 
-        return allowedCells
+            cnt += state[i][j+1] + state[i+1][j] + state[i+2][j+1] + state[i+1][j+2]
 
+            if abs(cnt) == blocksize:
+                f = 1
 
-    def checkAllowedMarkers(self, block):
-        # Returns all the valid cells of a block which the player can make a move on
+        if f == 0:
+            i = varx
+            j = vary
+            cnt = 0
 
-        allowed = []
+            cnt += state[i+1][j+1] + state[i+2][j] + state[i+3][j+1] + state[i+2][j+2]
 
-        for i in range(4):
-            for j in range(4):
-                if block[i][j] == 0:
-                    allowed.append((i, j))
+            if abs(cnt) == blocksize:
+                f = 1
 
-        return allowed
+        if f == 0:
+            i = varx
+            j = vary
+            cnt = 0
 
+            cnt += state[i][j+2] + state[i+1][j+1] + state[i+2][j+2] + state[i+1][j+3]
 
-    def getAllowedMoves(self, currentBoardStatus, currentBlockStatus, prevMove):
-        # Returns the set of all the possible moves the player has, given the previous move and the
-        # current block and board status
+            if abs(cnt) == blocksize:
+                f = 1
 
-        possibleMoves = []
+        if f == 0:
+            i = varx
+            j = vary
+            cnt = 0
 
-        for allowedBlock in self.checkAllowedBlocks(prevMove, currentBlockStatus):
-            possibleMoves += [ (4 * allowedBlock[0] + move[0], 4 * allowedBlock[1] + move[1] ) for move in self.checkAllowedMarkers(currentBoardStatus[allowedBlock[0]][allowedBlock[1]]) ]
+            cnt += state[i+1][j+2] + state[i+2][j+1] + state[i+3][j+2] + state[i+2][j+3]
 
-        return possibleMoves
+            if abs(cnt) == blocksize:
+                f = 1
 
+        if f:
+            for i in xrange(varx, varx + blocksize):
+                for j in xrange(vary, vary + blocksize):
+                    state[i][j] = nu
 
-    def getBlockStatus(self, block):
-        # Returns the status of the 4X4 block if that particular position block in the board has been won
+        return state
 
-        # 1 -> x/o (depending on whether P1 or P2) (Win)
-        # 2 -> o/x                                 (Loss)
-        # 3 -> d                                   (Draw)
+    def max_value(self, state, alpha, beta, depth, choice, blocksize):
+        if depth == 0:
+            return [self.eval_fn(state, blocksize), [-1, -1]]
+        v = -100000000000000.0
+        boardsize = blocksize * blocksize
+        rangexbeg = 0
+        rangexend = 0
+        rangeybeg = 0
+        rangeyend = 0
+        if self.filled(state, choice, blocksize):
+            rangexbeg = 0
+            rangexend = boardsize
+            rangeybegin = 0
+            rangeyend = boardsize
+        else:
+            rangexbeg = choice[0] * blocksize
+            rangexend = rangexbeg + blocksize
+            rangeybeg = choice[1] * blocksize
+            rangeyend = rangeybeg + blocksize
+        if self.nonew(state, [rangexbeg, rangexend, rangeybeg, rangeyend]):
+            return [self.eval_fn(state, blocksize), [-1, -1]]
+        for i in xrange(rangexbeg, rangexend):
+            for j in xrange(rangeybeg, rangeyend):
+                if state[i][j] == 0:
+                    s = copy.deepcopy(state)
+                    s[i][j] = 1
+                    s = self.changestate(s, [i / blocksize, j / blocksize], 1, blocksize)
+                    val = self.min_value(s, alpha, beta, depth - 1, [i % blocksize, j % blocksize], blocksize)
+                    if v < val[0]:
+                        v = val[0]
+                        choice1 = copy.deepcopy([i, j])
+                    if v >= beta:
+                        return [v, choice1]
+                    alpha = max(alpha, v)
 
-        for i in range(4):
-            if block[i][0] == block[i][1] == block[i][2] == block[i][3] and block[i][0] in (1,2):
-                # Checking for horizontal pattern in the block
-                return block[i][0]
-            if block[0][i] == block[1][i] == block[2][i] == block[3][i] and block[0][i] in (1,2):
-                # Checking for vertical pattern in the block
-                return block[0][i]
+        return [
+         v, choice1]
 
-        # Checking for diagonals
-        # if block[0][0] == block[1][1] == block[2][2] == block[3][3] and block[0][0] in (1,2):
-        #     return block[0][0]
-        # if block[0][3] == block[1][2] == block[2][1] == block[3][0] and block[1][2] in (1,2):
-        #     return block[0][3]
+    def min_value(self, state, alpha, beta, depth, choice, blocksize):
+        if depth == 0:
+            return [self.eval_fn(state, blocksize), [-1, -1]]
+        v = 100000000000000.0
+        boardsize = blocksize * blocksize
+        rangexbeg = 0
+        rangexend = 0
+        rangeybeg = 0
+        rangeyend = 0
+        if self.filled(state, choice, blocksize):
+            rangexbeg = 0
+            rangexend = boardsize
+            rangeybegin = 0
+            rangeyend = boardsize
+        else:
+            rangexbeg = choice[0] * blocksize
+            rangexend = rangexbeg + blocksize
+            rangeybeg = choice[1] * blocksize
+            rangeyend = rangeybeg + blocksize
+        if self.nonew(state, [rangexbeg, rangexend, rangeybeg, rangeyend]):
+            return [self.eval_fn(state, blocksize), [-1, -1]]
+        for i in range(rangexbeg, rangexend):
+            for j in xrange(rangeybeg, rangeyend):
+                if state[i][j] == 0:
+                    s = copy.deepcopy(state)
+                    s[i][j] = -1
+                    s = self.changestate(s, [i / blocksize, j / blocksize], -1, blocksize)
+                    val = self.max_value(s, alpha, beta, depth - 1, [i % blocksize, j % blocksize], blocksize)
+                    if v > val[0]:
+                        v = val[0]
+                        choice1 = copy.deepcopy([i, j])
+                    if v <= alpha:
+                        return [v, choice1]
+                    beta = min(beta, v)
 
-        # Checking for diamonds
-        # diamond-1
-        if block[0][1] == block[1][0] == block[2][1] == block[1][1] and block[0][1] in (1,2):
-            return block[0][1]
-        # diamond-2
-        if block[0][2] == block[1][1] == block[2][2] == block[1][3] and block[0][2] in (1,2):
-            return block[0][2]
-        # diamond-3
-        if block[1][1] == block[2][0] == block[3][1] == block[2][2] and block[1][1] in (1,2):
-            return block[1][1]
-        # diamond-4
-        if block[1][2] == block[2][1] == block[3][2] == block[2][3] and block[1][2] in (1,2):
-            return block[1][2]
+        return [
+         v, choice1]
 
-        # If case of draw
-        if not len(self.checkAllowedMarkers(block)):
-            return 3
+    def nonew(self, state, choice):
+        flag = 0
+        for i in xrange(choice[0], choice[1]):
+            for j in xrange(choice[2], choice[3]):
+                if state[i][j] == 0:
+                    flag = 1
+
+        return 1 - flag
+
+    def compress(self, state, blocksize):
+        boardsize = blocksize * blocksize
+        listfor = [ [ 0 for x in xrange(blocksize) ] for y in xrange(blocksize) ]
+        for i in xrange(0, boardsize, blocksize):
+            for j in xrange(0, boardsize, blocksize):
+                ans = 0
+                for k in xrange(i, i + blocksize):
+                    for l in xrange(j, j + blocksize):
+                        ans += state[k][l]
+
+                if abs(ans) == boardsize:
+                    if ans < 0:
+                        listfor[i / blocksize][j / blocksize] = -1
+                    else:
+                        listfor[i / blocksize][j / blocksize] = 1
+
+        return listfor
+
+    def wincheck(self, state, blocksize):
+        win = 100000
+        lose = -100000
+        boardsize = blocksize * blocksize
+        listfor = self.compress(state, blocksize)
+        for i in xrange(0, blocksize):
+            ans = 0
+            for j in xrange(0, blocksize):
+                ans += listfor[i][j]
+
+            if abs(ans) == blocksize:
+                if ans < 0:
+                    return lose
+                return win
+
+        for i in xrange(0, blocksize):
+            ans = 0
+            for j in xrange(0, blocksize):
+                ans += listfor[j][i]
+
+            if abs(ans) == blocksize:
+                if ans < 0:
+                    return lose
+                return win
+
+        i=0
+        j=0
+        ans = 0
+        ans += listfor[i][j+1] + listfor[i+1][j] + listfor[i+2][j+1] + listfor[i+1][j+2]
+
+        if abs(ans) == blocksize:
+            if ans < 0:
+                return lose
+            return win
+
+        ans = 0
+        ans += listfor[i+1][j+1] + listfor[i+2][j] + listfor[i+3][j+1] + listfor[i+2][j+2]
+
+        if abs(ans) == blocksize:
+            if ans < 0:
+                return lose
+            return win
+
+        ans = 0
+        ans += listfor[i][j+2] + listfor[i+1][j+1] + listfor[i+2][j+2] + listfor[i+1][j+3]
+
+        if abs(ans) == blocksize:
+            if ans < 0:
+                return lose
+            return win
+
+        ans = 0
+        ans += listfor[i+1][j+2] + listfor[i+2][j+1] + listfor[i+3][j+2] + listfor[i+2][j+3]
+
+        if abs(ans) == blocksize:
+            if ans < 0:
+                return lose
+            return win
 
         return 0
 
-    def scoreCount(self, i, j, block):
+    def eval_fn(self, state, blocksize):
+        val = 0
+        sumx = 0
+        val = self.wincheck(state, blocksize)
+        if abs(val) == 10000000000:
+            return val
+        store_block = [ [ [ 0 for x in xrange(2) ] for y in xrange(4) ] for z in xrange(4) ]
+        for i in xrange(0, blocksize):
+            for j in xrange(0, blocksize):
+                hashstore = self.ourhash(state, i * blocksize, j * blocksize, blocksize)
+                if np.isnan(self.store[hashstore][0]):
+                    self.store[hashstore] = self.winning(state, i * blocksize, j * blocksize, blocksize)
+                store_block[i][j] = self.store[hashstore]
+                sumx += store_block[i][j][0] - store_block[i][j][1]
 
-        flagr = 1   # flag for row win
-        flagc = 1   # flag for column win
-        # flagpd = 1  # flag for primary diagonal win
-        # flagnd = 1  # flag for non-primary diagonal win
-        flagd1 = 1   # flag for diamond-1 win
-        flagd2 = 1   # flag for diamond-2 win
-        flagd3 = 1   # flag for diamond-3 win
-        flagd4 = 1   # flag for diamond-4 win
+        val = self.winning2(self.compress(state, blocksize), blocksize, store_block) / 10000.0
+        if abs(val - 0.0) < 1e-06:
+            val = sumx
+        return val
 
-        self.score = 0
+    def ourhash(self, state, i, j, blocksize):
+        k = 0
+        for a in xrange(i, i + blocksize):
+            for b in xrange(j, j + blocksize):
+                k *= 3
+                k += 1 + state[a][b]
 
-        new_block = copy.deepcopy(block)
+        return k
 
-        for row in range(4):
-            if new_block[i][row] == 2:
-                flagr = 0
-        if flagr:
-            for row in range(4):
-                if new_block[i][row] == 1:
-                    self.score += 1
+    def winning2(self, state, blocksize, store_block):
+        val = 0
+        for i in xrange(blocksize):
+            temp = 1
+            temp1 = 1
+            for j in xrange(blocksize):
+                temp *= store_block[i][j][0]
+                temp1 *= store_block[i][j][1]
 
-        for col in range(4):
-            if new_block[col][j] == 2:
-                flagc = 0
-        if flagc:
-            for col in range(4):
-                if new_block[col][j]:
-                    self.score += 1
+            val += temp - temp1
 
-        # if (i,j) in [(0,0), (1,1), (2,2), (3,3)]:
-        #     for diag in range(4):
-        #         if new_block[diag][diag] == 2:
-        #             flagpd = 0
-        #     if flagpd:
-        #         for diag in range(4):
-        #             if new_block[diag][diag] == 1:
-        #                 self.score += 1
+        for i in xrange(blocksize):
+            temp = 1
+            temp1 = 1
+            for j in xrange(blocksize):
+                temp *= store_block[j][i][0]
+                temp1 *= store_block[j][i][1]
 
-        # if (i,j) in [(0,3), (1,2), (2,1), (3,0)]:
-        #     for diag in range(4):
-        #         if new_block[diag][3 - diag] == 2:
-        #             flagnd = 0
-        #     if flagnd:
-        #         for diag in range(4):
-        #             if new_block[diag][3 - diag] == 1:
-        #                 self.score += 1
+            val += temp - temp1
 
-        if (i,j) in [(0,1), (1,0), (2,1), (1,1)]:
-            if new_block[0][1] == 2:
-                flagd1 = 0
-            if new_block[1][0] == 2:
-                flagd1 = 0
-            if new_block[2][1] == 2:
-                flagd1 = 0
-            if new_block[1][1] == 2:
-                flagd1 = 0
-            if flagd1:
-                if new_block[0][1] == 1:
-                    self.score += 1
-                if new_block[1][0] == 1:
-                    self.score += 1
-                if new_block[2][1] == 1:
-                    self.score += 1
-                if new_block[1][1] == 1:
-                    self.score += 1
+        i=0
+        j=0
+        temp = 1
+        temp1 = 1
+        temp *= store_block[i][j+1][0] * store_block[i+1][j][0] * store_block[i+2][j+1][0] * store_block[i+1][j+2][0]
+        temp1 *= store_block[i][j+1][1] * store_block[i+1][j][1] * store_block[i+2][j+1][1] * store_block[i+1][j+2][1]
 
-        if (i,j) in [(0,2), (1,1), (2,2), (1,3)]:
-            if new_block[0][2] == 2:
-                flagd2 = 0
-            if new_block[1][1] == 2:
-                flagd2 = 0
-            if new_block[2][2] == 2:
-                flagd2 = 0
-            if new_block[1][3] == 2:
-                flagd2 = 0
-            if flagd2:
-                if new_block[0][2] == 1:
-                    self.score += 1
-                if new_block[1][1] == 1:
-                    self.score += 1
-                if new_block[2][2] == 1:
-                    self.score += 1
-                if new_block[1][3] == 1:
-                    self.score += 1
+        val += temp - temp1
 
-        if (i,j) in [(1,1), (2,0), (3,1), (2,2)]:
-            if new_block[1][1] == 2:
-                flagd3 = 0
-            if new_block[2][0] == 2:
-                flagd3 = 0
-            if new_block[3][1] == 2:
-                flagd3 = 0
-            if new_block[2][2] == 2:
-                flagd3 = 0
-            if flagd3:
-                if new_block[1][1] == 1:
-                    self.score += 1
-                if new_block[2][0] == 1:
-                    self.score += 1
-                if new_block[3][1] == 1:
-                    self.score += 1
-                if new_block[2][2] == 1:
-                    self.score += 1
+        temp = 1
+        temp1 = 1
+        temp *= store_block[i+1][j+2][0] * store_block[i+2][j+1][0] * store_block[i+3][j+2][0] * store_block[i+2][j+3][0]
+        temp1 *= store_block[i+1][j+2][1] * store_block[i+2][j+1][1] * store_block[i+3][j+2][1] * store_block[i+2][j+3][1]
 
-        if (i,j) in [(1,2), (2,1), (3,2), (2,3)]:
-            if new_block[1][2] == 2:
-                flagd4 = 0
-            if new_block[2][1] == 2:
-                flagd4 = 0
-            if new_block[3][2] == 2:
-                flagd4 = 0
-            if new_block[2][3] == 2:
-                flagd4 = 0
-            if flagd4:
-                if new_block[1][2] == 1:
-                    self.score += 1
-                if new_block[2][1] == 1:
-                    self.score += 1
-                if new_block[3][2] == 1:
-                    self.score += 1
-                if new_block[2][3] == 1:
-                    self.score += 1
+        val += temp - temp1
 
-        return self.score
+        temp = 1
+        temp1 = 1
+        temp *= store_block[i][j+2][0] * store_block[i+1][j+1][0] * store_block[i+2][j+2][0] * store_block[i+1][j+3][0]
+        temp1 *= store_block[i][j+2][1] * store_block[i+1][j+1][1] * store_block[i+2][j+2][1] * store_block[i+1][j+3][1]
 
-    def getBlockScore(self, block):
+        val += temp - temp1
 
-        block = tuple([ tuple(block[i]) for i in range(4) ] )
+        temp = 1
+        temp1 = 1
+        temp *= store_block[i+1][j+1][0] * store_block[i+2][j][0] * store_block[i+3][j+1][0] * store_block[i+2][j+2][0]
+        temp1 *= store_block[i+1][j+1][1] * store_block[i+2][j][1] * store_block[i+3][j+1][1] * store_block[i+2][j+2][1]
 
-        if block not in self.heuristicDict:
-            blockStats = self.getBlockStatus(block)
-            if blockStats == 1:
-                self.heuristicDict[block] = 100.00
-            elif blockStats == 2:
-                self.heuristicDict[block] = 0.1
-            elif blockStats == 3:
-                self.heuristicDict[block] = 0.0
-            else:
-                bestScore = -1000
-                moves = self.checkAllowedMarkers(block)
-                myPlayBlock = [ list(block[i]) for i in range(4) ]
-                oppnPlayBlock = [ list(block[i]) for i in range(4) ]
+        val += temp - temp1
 
-                for i in range(4):
-                    for j in range(4):
-                        if oppnPlayBlock[i][j]:
-                            oppnPlayBlock[i][j] = 3 - oppnPlayBlock[i][j]
+        return val
 
-                for move in moves:
-                    ans = 1.0 + self.scoreCount(move[0], move[1], myPlayBlock) - self.scoreCount(move[0], move[1], oppnPlayBlock)
-                    if ans >= bestScore:
-                        wePlayList = []
-                        best = ans
-                        wePlayList.append((move[0], move[1]))
-                    self.heuristicDict[block] = bestScore
-
-        return self.heuristicDict[block]
-
-    def getLineScore(self, line, blockProb, cpBlockProb, currentBlockStatus):
-
-        if 3 in [ currentBlockStatus[x[0]][x[1]] for x in line ]:
-            return 0
-
-        positiveScore = [ blockProb[x[0]][x[1]] for x in line ]
-        negativeScore = [ cpBlockProb[x[0]][x[1]] for x in line ]
-
-        pos = 1
-        neg = 1
-
-        for i in positiveScore:
-            pos *= i
-        for i in negativeScore:
-            neg *= i
-
-        return pos - neg
-
-    def getDiamondScore(self, blockProb, cpBlockProb, currentBlockStatus):
-
-        diamond = []
-
-        diamond[0] = [(0, 1), (1, 0), (1, 2), (2, 1)]
-        diamond[1] = [(0, 2), (1, 1), (2, 2), (1, 3)]
-        diamond[2] = [(1, 1), (2, 0), (3, 1), (2, 2)]
-        diamond[3] = [(1, 2), (2, 1), (3, 2), (2, 3)]
-
-        dScore = 0
-
-        for k in range(4):
-            if 3 in [ currentBlockStatus[i][j] for (i,j) in diamond[k] ]:
-                dScore += 0
-
-        if dScore == 0:
-            return 0
-
-        positiveScore = []
-        negativeScore = []
-
-        for k in range(4):
-            positiveScore = [ blockProb[i][j] for (i, j) in diamond[k] ]
-            negativeScore = [ cpBlockProb[i][j] for (i, j) in diamond[k] ]
-
-        pos = 1
-        neg = 1
-
-        for i in positiveScore:
-            pos *= i
-        for i in negativeScore:
-            neg *= i
-
-        return pos - neg
-
-    def terminalCheck(self, currentBoardStatus, currentBlockStatus):
-        terminalStat = self.getBlockStatus(currentBlockStatus)
-
-        if terminalStat == 0:
-            # Not defined case
-            return (False, 0)
-        if terminalStat == 1:
-            # Win case
-            return (True, 100000000)
-        if terminalStat == 2:
-            # Lose case
-            return (True, -100000000)
-
-        blockCount = 0
-
-        for i in range(4):
-            for j in range(4):
-                if currentBlockStatus[i][j] in (1, 2):
-                    blockCount += 3 - 2 * currentBlockStatus[i][j]
-
-        return (True, blockCount)
-
-    def getBoardScore(self, currentBoardStatus, currentBlockStatus):
-        terminalStat, terminalScore = self.terminalCheck(currentBoardStatus, currentBlockStatus)
-
-        if terminalStat:
-            return terminalScore
-
-        cpCurrentBoard = copy.deepcopy(currentBoardStatus)
-
-        for row in range(4):
-            for col in range(4):
-                for i in range(4):
-                    for j in range(4):
-                        if cpCurrentBoard[row][col][i][j]:
-                            cpCurrentBoard[row][col][i][j] = 3 - cpCurrentBoard[row][col][i][j]
-
-        blockProb = [ [0] * 4 for i in range(4) ]
-        cpBlockProb = [ [0] * 4 for i in range(4) ]
-
-        for i in range(4):
-            for j in range(4):
-                blockProb[i][j] = self.getBlockScore(currentBoardStatus[i][j])
-                cpBlockProb[i][j] = self.getBlockScore(cpCurrentBoard[i][j])
-
-        boardScore = []
-        for i in range(4):
-            line = [ (i, j) for j in range(4) ] # vertical line
-            boardScore.append(self.getLineScore(line, blockProb, cpBlockProb, currentBlockStatus))
-            line = [ (j, i) for j in range(4) ] # horizontal line
-            boardScore.append(self.getLineScore(line, blockProb, cpBlockProb, currentBlockStatus))
-
-        if 100000000 in boardScore:
-            return 100000000
-        if 1e-05 in boardScore:
-            return 1e-05
-
-        return sum(boardScore)
-
-    def move(self, currentBoardStatus, prevMove, flag):
-        formattedBoard = [ [ [ [0] * 4 for _ in range(4) ] for _ in range(4)] for _ in range(4) ]
-        formattedBlockStatus = [ [0] * 4 for _ in range(4) ]
-        copyBlock = [ [0] * 4 for _ in range(4) ]
-
-        for i in range(16):
-            for j in range(16):
-                if currentBoardStatus.board_status[i][j] == flag:
-                    formattedBoard[i/4][j/4][i%4][j%4] = 1      # Win
-                elif currentBoardStatus.board_status[i][j] == '-':
-                    formattedBoard[i/4][j/4][i%4][j%4] = 0      # Not played / empty
+    def winning(self, state, i, j, blocksize):
+        val = 0
+        f = 0
+        val1 = 0
+        for l in xrange(blocksize):
+            temp1 = 1
+            cnt1 = 0
+            bnt1 = 0
+            temp2 = 1
+            cnt2 = 0
+            bnt2 = 0
+            for m in xrange(blocksize):
+                if state[i + l][m + j] == 0:
+                    temp1 *= 0.5
                 else:
-                    formattedBoard[i/4][j/4][i%4][j%4] = 2      # Lost or Draw
-
-        for i in range(4):
-            for j in range(4):
-                if currentBoardStatus.board_status[i][j] == flag:
-                    formattedBlockStatus[i][j] = 1    # Win
-                elif currentBoardStatus.board_status[i][j] == '-':
-                    formattedBlockStatus[i][j] = 0    # Not played / empty
-                elif currentBoardStatus.board_status[i][j] == 'd':
-                    formattedBlockStatus[i][j] = 3    # Draw
+                    temp1 *= self.mult[l][m]
+                bnt1 += state[i + l][j + m]
+                cnt1 += abs(state[i + l][j + m])
+                if state[i + m][j + l] == 0:
+                    temp2 *= 0.5
                 else:
-                    formattedBlockStatus[i][j] = 2    # Lose
+                    temp2 *= self.mult[m][l]
+                bnt2 += state[i + m][j + l]
+                cnt2 += abs(state[i + m][j + l])
 
-        if prevMove[0] < 0 or prevMove[1] < 0:
-            uselessScore, nextMove, retDepth = 0, (10, 10), 0
-            depth = 0
+            if bnt1 == -cnt1:
+                val1 += temp1
+            if bnt1 == cnt1:
+                val += temp1
+            if bnt2 == -cnt2:
+                val1 += temp2
+            if bnt2 == cnt2:
+                val += temp2
+
+        i=0
+        j=0
+        temp = 1
+        cnt = 0
+        bnt = 0
+
+        if state[i][j+1] == 0:
+            temp *= 0.5
         else:
-            depth = 3
-            uselessScore, nextMove, retDepth = self.alphaBetaPruning(formattedBoard, formattedBlockStatus, -100000000, 100000000, True, prevMove, depth)
-        return nextMove
+            temp *= self.mult[i%4][(j+1)%4]
+        cnt += abs(state[i][j+1])
+        bnt += state[i][j+1]
 
-    def alphaBetaPruning(self, currentBoardStatus, currentBlockStatus, alpha, beta, flag, prevMove, depth):
-        tempBoard = copy.deepcopy(currentBoardStatus)
-        tempBlockStatus = copy.deepcopy(currentBlockStatus)
-        terminalStat, terminalScore = self.terminalCheck(currentBoardStatus, currentBlockStatus)
+        if state[i+1][j] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+1)%4][j%4]
+        cnt += abs(state[i+1][j])
+        bnt += state[i+1][j]
 
-        if terminalStat:
-            return (terminalScore, (), 0)
-        if depth <= 0:
-            return (self.getBoardScore(currentBoardStatus, currentBlockStatus), (), 0)
+        if state[i+2][j+1] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+2)%4][(j+1)%4]
+        cnt += abs(state[i+2][j+1])
+        bnt += state[i+2][j+1]
 
-        possibleMoves = self.getAllowedMoves(currentBoardStatus, currentBlockStatus, prevMove)
-        random.shuffle(possibleMoves)
-        bestMove = ()
-        bestDepth = 100
+        if state[i+1][j+2] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+1)%4][(j+2)%4]
+        cnt += abs(state[i+1][j+2])
+        bnt += state[i+1][j+2]
 
-        if flag:
-            v = -100000000
-            for move in possibleMoves:
-                tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 1
-                tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
-                childScore, childMove, childDepth = self.alphaBetaPruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
-                if childScore >= v:
-                    if v < childScore or bestDepth > childDepth:
-                        v = childScore
-                        bestMove = move
-                        bestDepth = childDepth
-                    alpha = max(alpha, v)
-                    tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 0
-                    tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
-                    if alpha >= beta:
-                        break
-                return (v, bestMove, bestDepth)
+        if bnt == -cnt:
+            val1 += temp
+        if bnt == cnt:
+            val += temp
 
-        v = 100000000
-        for move in possibleMoves:
-            tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 2
-            tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
-            childScore, childMove, childDepth = self.alphaBetaPruning(tempBoard, tempBlockStatus, alpha, beta, not flag, move, depth - 1)
-            if childScore <= v:
-                if v > childScore or bestDepth > childDepth:
-                    v = childScore
-                    bestMove = childMove
-                    bestDepth = childDepth
-            beta = min(beta, v)
-            tempBoard[move[0]/4][move[1]/4][move[0]%4][move[1]%4] = 0
-            tempBlockStatus[move[0]/4][move[1]/4] = self.getBlockStatus(tempBoard[move[0]/4][move[1]/4])
-            if alpha >= beta:
-                break
-        return (v, bestMove, bestDepth)
+        temp = 1
+        cnt = 0
+        bnt = 0
+
+        if state[i+1][j+2] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+1)%4][(j+2)%4]
+        cnt += abs(state[i+1][j+2])
+        bnt += state[i+1][j+2]
+
+        if state[i+2][j+1] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+2)%4][(j+1)%4]
+        cnt += abs(state[i+2][j+1])
+        bnt += state[i+2][j+1]
+
+        if state[i+3][j+2] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+3)%4][(j+2)%4]
+        cnt += abs(state[i+3][j+2])
+        bnt += state[i+3][j+2]
+
+        if state[i+2][j+3] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+2)%4][(j+3)%4]
+        cnt += abs(state[i+2][j+3])
+        bnt += state[i+2][j+3]
+
+        if bnt == -cnt:
+            val1 += temp
+        if bnt == cnt:
+            val += temp
+
+        temp = 1
+        cnt = 0
+        bnt = 0
+
+        if state[i+2][j] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+2)%4][j%4]
+        cnt += abs(state[i+2][j])
+        bnt += state[i+2][j]
+
+        if state[i+1][j+1] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+1)%4][(j+1)%4]
+        cnt += abs(state[i+1][j+1])
+        bnt += state[i+1][j+1]
+
+        if state[i+2][j+2] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+2)%4][(j+2)%4]
+        cnt += abs(state[i+2][j+2])
+        bnt += state[i+2][j+2]
+
+        if state[i+3][j+1] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+3)%4][(j+1)%4]
+        cnt += abs(state[i+3][j+1])
+        bnt += state[i+3][j+1]
+
+        if bnt == -cnt:
+            val1 += temp
+        if bnt == cnt:
+            val += temp
+
+        temp = 1
+        cnt = 0
+        bnt = 0
+
+        if state[i][j+2] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[i%4][(j+2)%4]
+        cnt += abs(state[i][j+2])
+        bnt += state[i][j+2]
+
+        if state[i+1][j+1] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+1)%4][(j+1)%4]
+        cnt += abs(state[i+1][j+1])
+        bnt += state[i+1][j+1]
+
+        if state[i+2][j+2] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+2)%4][(j+2)%4]
+        cnt += abs(state[i+2][j+2])
+        bnt += state[i+2][j+2]
+
+        if state[i+1][j+3] == 0:
+            temp *= 0.5
+        else:
+            temp *= self.mult[(i+1)%4][(j+3)%4]
+        cnt += abs(state[i+1][j+3])
+        bnt += state[i+1][j+3]
+
+        if bnt == -cnt:
+            val1 += temp
+        if bnt == cnt:
+            val += temp
+
+        return [val, val1]
+
+    def wonby(self, state, i, j, blocksize):
+        bal = 0
+        boardsize = blocksize * blocksize
+        for k in xrange(i, i + blocksize):
+            for l in xrange(j, j + blocksize):
+                bal += state[k][l]
+
+        if bal == -boardsize:
+            return -20
+        if bal == boardsize:
+            return 20
+        return 0
+
+    def filled(self, state, choice, blocksize):
+        if choice[0] == -1 and choice[1] == -1:
+            return 1
+        varx = choice[0] * blocksize
+        vary = choice[1] * blocksize
+        f = 0
+        for i in xrange(varx, varx + blocksize):
+            for j in xrange(vary, vary + blocksize):
+                if state[i][j] == 0:
+                    f = 1
+
+        return 1 - f
+
+    def move(self, board, old_move, flag):
+        blocksize = 4
+        boardsize = 16
+        other = 'x'
+        if flag == 'x':
+            other = 'o'
+        state = [ [ 0 for x in xrange(boardsize) ] for y in xrange(boardsize) ]
+        for i in xrange(0, blocksize * blocksize):
+            for j in xrange(0, blocksize * blocksize):
+                if board.block_status[i / blocksize][j / blocksize] == flag:
+                    state[i][j] = 1
+                elif board.block_status[i / blocksize][j / blocksize] == other:
+                    state[i][j] = -1
+                elif board.board_status[i][j] == other:
+                    state[i][j] = -1
+                elif board.board_status[i][j] == flag:
+                    state[i][j] = 1
+
+        choice = []
+        # choice_print = [0 for i in range(2)]
+        choice.append(old_move[0] % blocksize)
+        choice.append(old_move[1] % blocksize)
+        ans = -1e+20
+        signal.signal(signal.SIGALRM, self.signal_handler)
+        signal.alarm(13)
+        self.r = random.randint(0, 9)
+        print self.r
+        try:
+            for i in xrange(2, 30):
+                bal = self.max_value(state, -1e+20, 1e+20, i, choice, blocksize)
+                if bal[0] <= -100000 and i > 2:
+                    break
+                print bal
+                ans = bal[0]
+                choice_print = bal[1]
+                if ans >= 100000:
+                    break
+
+        except Exception as e:
+            print e,
+
+        signal.alarm(0)
+
+        if choice_print:
+            return (choice_print[0], choice_print[1])
+        else:
+            return (random.randint(0,15), random.randint(0,15))
