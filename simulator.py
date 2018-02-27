@@ -9,6 +9,7 @@ from team18 import Team18
 from myTeam import Player
 from DMG import MyPlayer
 from DMG1 import Player18
+from test import Team19
 #from teamX import TeamX
 
 TIME = 16
@@ -391,6 +392,12 @@ if __name__ == '__main__':
 		obj2 = MyPlayer()
 	elif option == '9':
 		obj1 = MyPlayer()
+		obj2 = MyPlayer()
+	elif option == '10':
+		obj1 = MyPlayer()
+		obj2 = Team19()
+	elif option == '11':
+		obj1 = Team19()
 		obj2 = MyPlayer()
 #	elif option == '8':
 #		obj1 = Player()

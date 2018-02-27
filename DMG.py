@@ -393,28 +393,28 @@ class MyPlayer:
         bnt = 0
 
         if state[i][j+1] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[i%4][(j+1)%4]
         cnt += abs(state[i][j+1])
         bnt += state[i][j+1]
 
         if state[i+1][j] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+1)%4][j%4]
         cnt += abs(state[i+1][j])
         bnt += state[i+1][j]
 
         if state[i+2][j+1] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+2)%4][(j+1)%4]
         cnt += abs(state[i+2][j+1])
         bnt += state[i+2][j+1]
 
         if state[i+1][j+2] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+1)%4][(j+2)%4]
         cnt += abs(state[i+1][j+2])
@@ -430,28 +430,28 @@ class MyPlayer:
         bnt = 0
 
         if state[i+1][j+2] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+1)%4][(j+2)%4]
         cnt += abs(state[i+1][j+2])
         bnt += state[i+1][j+2]
 
         if state[i+2][j+1] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+2)%4][(j+1)%4]
         cnt += abs(state[i+2][j+1])
         bnt += state[i+2][j+1]
 
         if state[i+3][j+2] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+3)%4][(j+2)%4]
         cnt += abs(state[i+3][j+2])
         bnt += state[i+3][j+2]
 
         if state[i+2][j+3] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+2)%4][(j+3)%4]
         cnt += abs(state[i+2][j+3])
@@ -467,28 +467,28 @@ class MyPlayer:
         bnt = 0
 
         if state[i+2][j] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+2)%4][j%4]
         cnt += abs(state[i+2][j])
         bnt += state[i+2][j]
 
         if state[i+1][j+1] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+1)%4][(j+1)%4]
         cnt += abs(state[i+1][j+1])
         bnt += state[i+1][j+1]
 
         if state[i+2][j+2] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+2)%4][(j+2)%4]
         cnt += abs(state[i+2][j+2])
         bnt += state[i+2][j+2]
 
         if state[i+3][j+1] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+3)%4][(j+1)%4]
         cnt += abs(state[i+3][j+1])
@@ -504,28 +504,28 @@ class MyPlayer:
         bnt = 0
 
         if state[i][j+2] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[i%4][(j+2)%4]
         cnt += abs(state[i][j+2])
         bnt += state[i][j+2]
 
         if state[i+1][j+1] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+1)%4][(j+1)%4]
         cnt += abs(state[i+1][j+1])
         bnt += state[i+1][j+1]
 
         if state[i+2][j+2] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+2)%4][(j+2)%4]
         cnt += abs(state[i+2][j+2])
         bnt += state[i+2][j+2]
 
         if state[i+1][j+3] == 0:
-            temp *= 0.5
+            temp *= 0.75
         else:
             temp *= self.mult[(i+1)%4][(j+3)%4]
         cnt += abs(state[i+1][j+3])
@@ -583,7 +583,7 @@ class MyPlayer:
                     state[i][j] = 1
 
         choice = []
-        choice_print = [0 for i in range(2)]
+        # choice_print = [0 for i in range(2)]
         choice.append(old_move[0] % blocksize)
         choice.append(old_move[1] % blocksize)
         ans = -1e+20
